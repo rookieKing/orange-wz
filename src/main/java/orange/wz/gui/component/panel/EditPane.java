@@ -923,28 +923,15 @@ public final class EditPane extends JSplitPane {
      * @param paths 节点路径，不含 Root
      */
     public void focusNodeByPath(List<String> paths) {
-        DefaultMutableTreeNode node = treeRoot;
-        for (int i = 0; i < paths.size(); i++) {
-            node = findTreeNodeByName(node, paths.get(i));
-            if (node == null) break;
+        navigateToPath(paths, true, false, true);
+    }
 
-            if (i == paths.size() - 1) {
-                TreePath path = new TreePath(node.getPath());
-                tree.setSelectionPath(path);
-                tree.scrollPathToVisible(path); // 关键，滚动到可见
-            } else {
-                if (node.isLeaf()) {
-                    SwingWorker<Void, Void> worker = handleTreeDoubleClick(node);
-                    try {
-                        worker.get(); // 等待完成
-                    } catch (ExecutionException | InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-                    tree.expandPath(new TreePath(node.getPath()));
-                }
-            }
+    public void focusNodeByPath(String path) {
+        if (path == null || path.isBlank()) {
+            return;
         }
+        ensureRootNodeParsed(path);
+        navigateToPath(List.of(path.split("/")), true, false, true);
     }
 
     /**
@@ -962,6 +949,233 @@ public final class EditPane extends JSplitPane {
             }
         }
         return null;
+    }
+
+    public DefaultMutableTreeNode findTreeNodeByPath(String path) {
+        DefaultMutableTreeNode node = treeRoot;
+        String[] paths = path.split("/");
+        for (String item : paths) {
+            node = findTreeNodeByName(node, item);
+            if (node == null) {
+                return null;
+            }
+        }
+        return node;
+    }
+
+    public void ensureRootNodeParsed(String path) {
+        DefaultMutableTreeNode rootNode = findRootTreeNode(path);
+        if (rootNode == null || !rootNode.isLeaf()) {
+            return;
+        }
+        expandTreeNode(rootNode, true, true, false);
+    }
+
+    public void reloadFilePreservingState(String path) {
+        DefaultMutableTreeNode node = findRootTreeNode(path);
+        if (node == null) {
+            return;
+        }
+        WzKey key = extractNodeKey(node);
+        if (key == null) {
+            return;
+        }
+        reloadFilePreservingState(node, key);
+    }
+
+    private boolean navigateToPath(List<String> paths, boolean selectTarget, boolean expandTarget, boolean scrollTarget) {
+        if (paths == null || paths.isEmpty()) {
+            return false;
+        }
+
+        DefaultMutableTreeNode node = treeRoot;
+        for (int i = 0; i < paths.size(); i++) {
+            node = findTreeNodeByName(node, paths.get(i));
+            if (node == null) {
+                return false;
+            }
+
+            TreePath treePath = new TreePath(node.getPath());
+            boolean isLast = i == paths.size() - 1;
+            if (isLast) {
+                if (expandTarget) {
+                    if (node.isLeaf()) {
+                        waitForWorker(handleTreeDoubleClick(node));
+                    } else {
+                        tree.expandPath(treePath);
+                    }
+                }
+                if (selectTarget) {
+                    tree.setSelectionPath(treePath);
+                    if (scrollTarget) {
+                        tree.scrollPathToVisible(treePath);
+                    }
+                }
+                continue;
+            }
+
+            if (node.isLeaf()) {
+                waitForWorker(handleTreeDoubleClick(node));
+            } else {
+                tree.expandPath(treePath);
+            }
+        }
+        return true;
+    }
+
+    private void waitForWorker(SwingWorker<Void, Void> worker) {
+        try {
+            worker.get();
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private DefaultMutableTreeNode findRootTreeNode(String path) {
+        if (path == null || path.isBlank()) {
+            return null;
+        }
+        String[] paths = path.split("/");
+        if (paths.length == 0 || paths[0].isBlank()) {
+            return null;
+        }
+        return findTreeNodeByName(treeRoot, paths[0]);
+    }
+
+    private WzKey extractNodeKey(DefaultMutableTreeNode node) {
+        if (node == null || !(node.getUserObject() instanceof WzObject wzObject)) {
+            return null;
+        }
+        if (wzObject instanceof WzFolder folder) {
+            return new WzKey(-1, folder.getKeyBoxName(), folder.getIv(), folder.getKey());
+        }
+        if (wzObject instanceof WzDirectory dir && dir.isWzFile()) {
+            WzFile wzFile = dir.getWzFile();
+            return new WzKey(-1, wzFile.getKeyBoxName(), wzFile.getIv(), wzFile.getKey());
+        }
+        if (wzObject instanceof WzSavableFile file) {
+            return new WzKey(-1, file.getKeyBoxName(), file.getIv(), file.getKey());
+        }
+        return null;
+    }
+
+    private void reloadFilePreservingState(DefaultMutableTreeNode node, WzKey key) {
+        String rootPath = getNodePath(node);
+        if (rootPath == null) {
+            return;
+        }
+
+        List<String> expandedPaths = snapshotExpandedRelativePaths(node, rootPath);
+        String selectedPath = snapshotSelectedPath(rootPath);
+        String selectedRelativePath = toRelativePath(selectedPath, rootPath);
+
+        DefaultMutableTreeNode newNode = reloadFile(node, key);
+        if (newNode == null) {
+            return;
+        }
+
+        String newRootPath = getNodePath(newNode);
+        if (newRootPath == null) {
+            return;
+        }
+
+        ensureRootNodeParsed(newRootPath);
+        restoreExpandedRelativePaths(newRootPath, expandedPaths);
+        if (selectedRelativePath != null) {
+            focusNodeByPath(joinRelativePath(newRootPath, selectedRelativePath));
+        }
+    }
+
+    private List<String> snapshotExpandedRelativePaths(DefaultMutableTreeNode rootNode, String rootPath) {
+        List<String> result = new ArrayList<>();
+        collectExpandedRelativePaths(rootNode, rootPath, result);
+        return result;
+    }
+
+    private void collectExpandedRelativePaths(DefaultMutableTreeNode node, String rootPath, List<String> collector) {
+        String currentPath = getNodePath(node);
+        if (currentPath == null) {
+            return;
+        }
+
+        TreePath treePath = new TreePath(node.getPath());
+        if (tree.isExpanded(treePath)) {
+            collector.add(toRelativePath(currentPath, rootPath));
+        }
+
+        for (int i = 0; i < node.getChildCount(); i++) {
+            collectExpandedRelativePaths((DefaultMutableTreeNode) node.getChildAt(i), rootPath, collector);
+        }
+    }
+
+    private void restoreExpandedRelativePaths(String rootPath, List<String> expandedPaths) {
+        for (String relativePath : expandedPaths) {
+            if (relativePath == null) {
+                continue;
+            }
+            String fullPath = joinRelativePath(rootPath, relativePath);
+            if (relativePath.isBlank()) {
+                DefaultMutableTreeNode node = findTreeNodeByPath(fullPath);
+                if (node != null) {
+                    tree.expandPath(new TreePath(node.getPath()));
+                }
+                continue;
+            }
+            navigateToPath(List.of(fullPath.split("/")), false, true, false);
+        }
+    }
+
+    private String snapshotSelectedPath(String rootPath) {
+        TreePath selectedPath = tree.getSelectionPath();
+        if (selectedPath == null) {
+            return null;
+        }
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectedPath.getLastPathComponent();
+        String path = getNodePath(node);
+        if (path == null || !isPathUnderRoot(path, rootPath)) {
+            return null;
+        }
+        return path;
+    }
+
+    private boolean isPathUnderRoot(String path, String rootPath) {
+        return path.equals(rootPath) || path.startsWith(rootPath + "/");
+    }
+
+    private String toRelativePath(String path, String rootPath) {
+        if (path == null || rootPath == null || !isPathUnderRoot(path, rootPath)) {
+            return null;
+        }
+        if (path.equals(rootPath)) {
+            return "";
+        }
+        return path.substring(rootPath.length() + 1);
+    }
+
+    private String joinRelativePath(String rootPath, String relativePath) {
+        if (relativePath == null || relativePath.isBlank()) {
+            return rootPath;
+        }
+        return rootPath + "/" + relativePath;
+    }
+
+    private String getNodePath(DefaultMutableTreeNode node) {
+        if (node == null || !(node.getUserObject() instanceof WzObject wzObject)) {
+            return null;
+        }
+        return wzObject.getPath();
+    }
+
+    public List<WzObject> snapshotRootObjects() {
+        List<WzObject> roots = new ArrayList<>();
+        for (int i = 0; i < treeRoot.getChildCount(); i++) {
+            DefaultMutableTreeNode child = (DefaultMutableTreeNode) treeRoot.getChildAt(i);
+            Object userObject = child.getUserObject();
+            if (userObject instanceof WzObject wzObject) {
+                roots.add(wzObject);
+            }
+        }
+        return roots;
     }
 
     /**
@@ -1208,7 +1422,7 @@ public final class EditPane extends JSplitPane {
     }
 
     // 重载 -------------------------------------------------------------------------------------------------------------
-    private void reloadFile(DefaultMutableTreeNode node, WzKey key) {
+    private DefaultMutableTreeNode reloadFile(DefaultMutableTreeNode node, WzKey key) {
         DefaultMutableTreeNode pNode = (DefaultMutableTreeNode) node.getParent();
         int index = pNode.getIndex(node);
         WzObject oldObject = (WzObject) node.getUserObject();
@@ -1219,7 +1433,7 @@ public final class EditPane extends JSplitPane {
         } else if (oldObject instanceof WzDirectory wzDir && wzDir.isWzFile()) {
             if (wzDir.getWzFile().isNewFile()) {
                 JMessageUtil.error("新建的文件无法使用重载功能，请先另存为。");
-                return;
+                return null;
             }
             WzFile oldWzFile = wzDir.getWzFile();
             String filePath = oldWzFile.getFilePath();
@@ -1228,7 +1442,7 @@ public final class EditPane extends JSplitPane {
         } else if (oldObject instanceof WzImageFile oldImg) {
             if (oldImg.isNewFile()) {
                 JMessageUtil.error("新建的文件无法使用重载功能，请先另存为。");
-                return;
+                return null;
             }
             Path filePath = Path.of(oldImg.getFilePath());
             String filename = filePath.getFileName().toString();
@@ -1240,12 +1454,13 @@ public final class EditPane extends JSplitPane {
         }
 
         removeNodeFromTree(node);
-        insertNodeToTree(pNode, newObject, true, index);
+        DefaultMutableTreeNode newNode = insertNodeToTree(pNode, newObject, true, index);
 
         if (pNode.getUserObject() instanceof WzFolder wzFolder) {
             wzFolder.remove(oldObject);
             wzFolder.add(newObject);
         }
+        return newNode;
     }
 
     /**
@@ -1262,7 +1477,7 @@ public final class EditPane extends JSplitPane {
 
         for (TreePath treePath : treePaths) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
-            reloadFile(node, key);
+            reloadFilePreservingState(node, key);
         }
 
         clear();
@@ -1426,7 +1641,7 @@ public final class EditPane extends JSplitPane {
             } else {
                 JMessageUtil.error("保存失败，请查看日志文件");
             }
-            reloadFile(node, new WzKey(-1, keyBoxName, iv, key));
+            reloadFilePreservingState(node, new WzKey(-1, keyBoxName, iv, key));
         }
     }
 
@@ -1469,7 +1684,7 @@ public final class EditPane extends JSplitPane {
             if (!wz.save()) {
                 JMessageUtil.error("保存失败，请查看日志文件");
             }
-            reloadFile(node, new WzKey(-1, keyBoxName, iv, key));
+            reloadFilePreservingState(node, new WzKey(-1, keyBoxName, iv, key));
         }
     }
 
