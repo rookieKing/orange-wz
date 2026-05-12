@@ -473,7 +473,7 @@ public final class EditPane extends JSplitPane {
 
         // 更新状态栏
         String text = getNodePathText(wzObject, npcAction);
-        MainFrame.getInstance().setStatusTextDirect(text);
+        MainFrame.getInstance().setStatusText(text);
     }
 
     private String getNodePathText(WzObject wzObject, String npcAction) {
@@ -675,19 +675,19 @@ public final class EditPane extends JSplitPane {
                     if (directory.isWzFile()) {
                         log.warn("wz文件 不支持删除功能");
                     } else {
-                        wzDirectoryPopupMenu.getDeleteBtn().doClick();
+                        wzDirectoryPopupMenu.getBtnDelete().doClick();
                     }
                 } else if (wzObject instanceof WzImageFile) {
                     log.warn("img文件 不支持删除功能");
                 } else if (wzObject instanceof WzXmlFile) {
                     log.warn("xml文件 不支持删除功能");
                 } else if (wzObject instanceof WzImage) {
-                    wzImagePopupMenu.getDeleteBtn().doClick();
+                    wzImagePopupMenu.getBtnDelete().doClick();
                 } else if (wzObject instanceof WzImageProperty prop) {
                     if (prop.isListProperty()) {
-                        wzListPropertyPopupMenu.getDeleteBtn().doClick();
+                        wzListPropertyPopupMenu.getBtnDelete().doClick();
                     } else {
-                        wzValuePropertyPopupMenu.getDeleteBtn().doClick();
+                        wzValuePropertyPopupMenu.getBtnDelete().doClick();
                     }
                 }
             }
@@ -709,19 +709,19 @@ public final class EditPane extends JSplitPane {
                     if (directory.isWzFile()) {
                         log.warn("wz文件 不支持复制功能");
                     } else {
-                        wzDirectoryPopupMenu.getCopyBtn().doClick();
+                        wzDirectoryPopupMenu.getBtnCopy().doClick();
                     }
                 } else if (wzObject instanceof WzImageFile) {
-                    wzImageFilePopupMenu.getCopyBtn().doClick();
+                    wzImageFilePopupMenu.getBtnCopy().doClick();
                 } else if (wzObject instanceof WzXmlFile) {
-                    wzXmlFilePopupMenu.getCopyBtn().doClick();
+                    wzXmlFilePopupMenu.getBtnCopy().doClick();
                 } else if (wzObject instanceof WzImage) {
-                    wzImagePopupMenu.getCopyBtn().doClick();
+                    wzImagePopupMenu.getBtnCopy().doClick();
                 } else if (wzObject instanceof WzImageProperty prop) {
                     if (prop.isListProperty()) {
-                        wzListPropertyPopupMenu.getCopyBtn().doClick();
+                        wzListPropertyPopupMenu.getBtnCopy().doClick();
                     } else {
-                        wzValuePropertyPopupMenu.getCopyBtn().doClick();
+                        wzValuePropertyPopupMenu.getBtnCopy().doClick();
                     }
                 }
             }
@@ -741,19 +741,19 @@ public final class EditPane extends JSplitPane {
                     log.warn("系统文件夹 不支持粘贴功能");
                 } else if (wzObject instanceof WzDirectory directory) {
                     if (directory.isWzFile()) {
-                        wzFilePopupMenu.getPasteBtn().doClick();
+                        wzFilePopupMenu.getBtnPaste().doClick();
                     } else {
-                        wzDirectoryPopupMenu.getPasteBtn().doClick();
+                        wzDirectoryPopupMenu.getBtnPaste().doClick();
                     }
                 } else if (wzObject instanceof WzImageFile) {
-                    wzImageFilePopupMenu.getPasteBtn().doClick();
+                    wzImageFilePopupMenu.getBtnPaste().doClick();
                 } else if (wzObject instanceof WzXmlFile) {
-                    wzXmlFilePopupMenu.getPasteBtn().doClick();
+                    wzXmlFilePopupMenu.getBtnPaste().doClick();
                 } else if (wzObject instanceof WzImage) {
-                    wzImagePopupMenu.getPasteBtn().doClick();
+                    wzImagePopupMenu.getBtnPaste().doClick();
                 } else if (wzObject instanceof WzImageProperty prop) {
                     if (prop.isListProperty()) {
-                        wzListPropertyPopupMenu.getPasteBtn().doClick();
+                        wzListPropertyPopupMenu.getBtnPaste().doClick();
                     } else {
                         log.warn("粘贴对象 WzImageProperty 不是一个 List");
                     }

@@ -1,35 +1,23 @@
 package orange.wz.gui.component.menu;
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import orange.wz.gui.MainFrame;
 import orange.wz.gui.component.panel.EditPane;
 
 import javax.swing.*;
 
-import static orange.wz.gui.Icons.AiOutlineCopy;
-import static orange.wz.gui.Icons.AiOutlineDelete;
-
-@Slf4j
-public final class WzValuePropertyMenu extends JPopupMenu {
-    @Getter
-    private final JMenuItem deleteBtn;
-    @Getter
-    private final JMenuItem copyBtn;
-
+public final class WzValuePropertyMenu extends TreeMenu {
     public WzValuePropertyMenu(EditPane editPane) {
-        super();
+        super(editPane);
 
-        copyBtn = new JMenuItem(MainFrame.i18n.get("copy"), AiOutlineCopy);
-        deleteBtn = new JMenuItem("删除节点", AiOutlineDelete);
-        JMenuItem chineseBtn = new JMenuItem("汉化");
+        add(btnCopy);
+        add(btnDelete);
+        add(btnLocalize);
+    }
 
-        copyBtn.addActionListener(e -> editPane.doCopy());
-        deleteBtn.addActionListener(e -> editPane.delete());
-        chineseBtn.addActionListener(e -> editPane.localizeString());
+    public JMenuItem getBtnDelete() {
+        return btnDelete;
+    }
 
-        add(copyBtn);
-        add(deleteBtn);
-        add(chineseBtn);
+    public JMenuItem getBtnCopy() {
+        return btnCopy;
     }
 }

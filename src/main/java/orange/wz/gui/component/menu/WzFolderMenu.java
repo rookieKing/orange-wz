@@ -18,114 +18,95 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static orange.wz.gui.Icons.*;
+import static orange.wz.gui.Icons.FiPackage;
 
 @Slf4j
-public final class WzFolderMenu extends JPopupMenu {
+public final class WzFolderMenu extends TreeMenu {
     private final JTree tree;
 
     public WzFolderMenu(EditPane editPane, JTree tree) {
-        super();
+        super(editPane);
         this.tree = tree;
 
-        JMenuItem saveBtn = new JMenuItem(MainFrame.i18n.get("save"), AiOutlineSaveIcon);
-        JMenuItem packageBtn = new JMenuItem("打包", FiPackage);
-        JMenuItem unloadBtn = new JMenuItem("卸载", AiOutlineCloseIcon);
-        JMenuItem reloadBtn = new JMenuItem("重载", AiOutlineReloadIcon);
-        JMenuItem keyBtn = new JMenuItem("修改密钥", AiOutlineKey);
-        JMenu exportBtn = new JMenu("导出");
-        JMenuItem exportImgBtn = new JMenuItem("Img");
-        JMenuItem exportXmlBtn = new JMenuItem("Xml");
-        exportBtn.add(exportImgBtn);
-        exportBtn.add(exportXmlBtn);
+        JMenuItem btnPackage = new JMenuItem("打包", FiPackage);
+        btnPackage.addActionListener(e -> packageBtnAction());
 
-        saveBtn.addActionListener(e -> editPane.save());
-        packageBtnAction(packageBtn);
-        unloadBtn.addActionListener(e -> editPane.unload());
-        reloadBtn.addActionListener(e -> editPane.reloadFile());
-        keyBtn.addActionListener(e -> editPane.changeKey());
-        exportImgBtn.addActionListener(e -> editPane.exportImg());
-        exportXmlBtn.addActionListener(e -> editPane.exportXml());
-
-        add(saveBtn);
-        add(packageBtn);
-        add(unloadBtn);
-        add(reloadBtn);
-        add(keyBtn);
-        add(exportBtn);
+        add(btnSave);
+        add(btnPackage);
+        add(btnUnload);
+        add(btnReload);
+        add(btnChangeKey);
+        add(btnExport);
     }
 
-    private void packageBtnAction(JMenuItem item) {
-        item.addActionListener(e -> {
-            TreePath[] selectedPaths = tree.getSelectionPaths();
-            if (TreePathUtil.isNullOrMultiple(selectedPaths)) return;
+    private void packageBtnAction() {
+        TreePath[] selectedPaths = tree.getSelectionPaths();
+        if (TreePathUtil.isNullOrMultiple(selectedPaths)) return;
 
-            Short fileVersion = null;
-            while (fileVersion == null) {
-                String input = JOptionPane.showInputDialog("版本号(79、83等)：");
-                if (input == null) return;
-                try {
-                    short value = Short.parseShort(input.trim());
-                    if (value < 0) JMessageUtil.error("版本号只能是大于0的纯数字");
-                    fileVersion = value;
-                } catch (NumberFormatException ex) {
-                    JMessageUtil.error("版本号只能是大于0的纯数字");
-                }
+        Short fileVersion = null;
+        while (fileVersion == null) {
+            String input = JOptionPane.showInputDialog("版本号(79、83等)：");
+            if (input == null) return;
+            try {
+                short value = Short.parseShort(input.trim());
+                if (value < 0) JMessageUtil.error("版本号只能是大于0的纯数字");
+                fileVersion = value;
+            } catch (NumberFormatException ex) {
+                JMessageUtil.error("版本号只能是大于0的纯数字");
             }
+        }
 
-            File folder = FileDialog.chooseOpenFolder("请选择输出目录");
-            if (folder == null) {
-                log.info("用户取消了操作");
-                return;
-            }
+        File folder = FileDialog.chooseOpenFolder("请选择输出目录");
+        if (folder == null) {
+            log.info("用户取消了操作");
+            return;
+        }
 
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectedPaths[0].getLastPathComponent();
-            WzFolder wzFolder = (WzFolder) node.getUserObject();
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectedPaths[0].getLastPathComponent();
+        WzFolder wzFolder = (WzFolder) node.getUserObject();
 
-            Short finalFileVersion = fileVersion;
-            new SwingWorker<Void, Void>() {
-                @Override
-                protected Void doInBackground() {
-                    if (wzFolder.getName().equals("Data")) {
-                        List<WzObject> children = wzFolder.getChildren();
-                        int count = 0;
-                        int total = children.size() + 1;
-                        MainFrame.getInstance().updateProgress(0, total);
+        Short finalFileVersion = fileVersion;
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                if (wzFolder.getName().equals("Data")) {
+                    List<WzObject> children = wzFolder.getChildren();
+                    int count = 0;
+                    int total = children.size() + 1;
+                    MainFrame.getInstance().updateProgress(0, total);
 
-                        String savePath = Path.of(folder.getAbsolutePath(), "Base.wz").toString();
-                        packageBase(finalFileVersion, wzFolder, savePath);
-                        MainFrame.getInstance().updateProgress(++count, total);
+                    String savePath = Path.of(folder.getAbsolutePath(), "Base.wz").toString();
+                    packageBase(finalFileVersion, wzFolder, savePath);
+                    MainFrame.getInstance().updateProgress(++count, total);
 
-                        for (WzObject wzObject : children) {
-                            if (wzObject instanceof WzFolder child) {
-                                savePath = Path.of(folder.getAbsolutePath(), child.getName() + ".wz").toString();
-                                packageFolder(finalFileVersion, child, savePath);
-                            }
-                            MainFrame.getInstance().updateProgress(++count, total);
+                    for (WzObject wzObject : children) {
+                        if (wzObject instanceof WzFolder child) {
+                            savePath = Path.of(folder.getAbsolutePath(), child.getName() + ".wz").toString();
+                            packageFolder(finalFileVersion, child, savePath);
                         }
-                    } else {
-                        String savePath = Path.of(folder.getAbsolutePath(), wzFolder.getName()).toString();
-                        if (!savePath.endsWith(".wz")) savePath = savePath + ".wz";
-                        packageFolder(finalFileVersion, wzFolder, savePath);
+                        MainFrame.getInstance().updateProgress(++count, total);
                     }
-
-                    return null;
+                } else {
+                    String savePath = Path.of(folder.getAbsolutePath(), wzFolder.getName()).toString();
+                    if (!savePath.endsWith(".wz")) savePath = savePath + ".wz";
+                    packageFolder(finalFileVersion, wzFolder, savePath);
                 }
 
-                @Override
-                protected void done() {
-                    try {
-                        get();
-                        MainFrame.getInstance().setStatusText("%s 打包完成", wzFolder.getName());
-                    } catch (Exception ex) {
-                        throw new RuntimeException(ex);
-                    }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    MainFrame.getInstance().setStatusText("%s 打包完成", wzFolder.getName());
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
                 }
-            }.execute();
-        });
+            }
+        }.execute();
     }
 
-    // 打包 -------------------------------------------------------------------------------------------------------------
     private void packageBase(short fileVersion, WzFolder wzFolder, String savePath) {
         Set<String> directories = new HashSet<>();
         List<WzImageFile> imageFiles = new ArrayList<>();

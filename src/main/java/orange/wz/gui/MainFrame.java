@@ -312,19 +312,20 @@ public class MainFrame extends JFrame {
     /**
      * 设置底部状态文字
      *
-     * @param format 文字格式
-     * @param args   参数
+     * @param message 文字
      */
-    public void setStatusText(String format, Object... args) {
+    public void setStatusText(String message, Object... args) {
         if (statusLabel != null) {
-            statusLabel.setText(String.format(format, args));
+            statusLabel.setText(message);
         }
+        log.info(message);
     }
 
-    public void setStatusTextDirect(String format) {
+    public void setStatusTextWithWarnLog(String message) {
         if (statusLabel != null) {
-            statusLabel.setText(format);
+            statusLabel.setText(message);
         }
+        log.warn(message);
     }
 
     public void setStatusTextWithErrLog(String message) {

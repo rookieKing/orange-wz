@@ -25,13 +25,13 @@ public final class CanvasUtil {
                 search(result, prop.getChildren());
             } else if (wzObject instanceof WzDirectory wzDir) {
                 if (wzDir.isWzFile() && !wzDir.getWzFile().parse()) {
-                    MainFrame.getInstance().setStatusText("文件 %s 解析失败 %s", wzDir.getName(), wzDir.getWzFile().getStatus().getMessage());
+                    MainFrame.getInstance().setStatusTextWithErrLog(MainFrame.i18n.get("error.parse", wzDir.getName(), wzDir.getWzFile().getStatus().getMessage()));
                     throw new RuntimeException();
                 }
                 search(result, wzDir.getChildren());
             } else if (wzObject instanceof WzImage wzImg) {
                 if (!wzImg.parse()) {
-                    MainFrame.getInstance().setStatusText("文件 %s 解析失败: %s", wzImg.getName(), wzImg.getStatus().getMessage());
+                    MainFrame.getInstance().setStatusTextWithErrLog(MainFrame.i18n.get("error.parse", wzImg.getName(), wzImg.getStatus().getMessage()));
                     throw new RuntimeException();
                 }
                 search(result, wzImg.getChildren());
