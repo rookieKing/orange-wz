@@ -204,7 +204,7 @@ public final class EditPane extends JSplitPane {
                     setIcon(icon);
                     String extraText = "&nbsp;&nbsp;";
                     switch (obj) {
-                        case WzFolder wzFolder -> extraText += "[" + wzFolder.getChildren().size() + "]";
+                        case WzFolder wzFolder -> extraText += "[" + wzFolder.countChildren() + "]";
                         case WzDirectory wzDir -> extraText += "[" + wzDir.getChildren().size() + "]";
                         case WzImage wzImg -> extraText += "[" + wzImg.getChildren().size() + "]";
                         case WzCanvasProperty prop -> extraText += prop.getWidth() + " x " + prop.getHeight();

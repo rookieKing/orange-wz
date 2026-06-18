@@ -39,6 +39,10 @@ public class WzFolder extends WzObject {
         return children.getAllChildren();
     }
 
+    public int countChildren() {
+        return children.getAllChildren().size();
+    }
+
     public void add(WzObject wzObject) {
         if (wzObject instanceof WzFolder wzFolder) {
             add(wzFolder);
