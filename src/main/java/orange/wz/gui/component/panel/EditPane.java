@@ -61,19 +61,19 @@ public final class EditPane extends JSplitPane {
     private String currentFormName;
     @Getter
     private final Map<String, AbstractValueForm> nodeForms = Map.ofEntries(
-            Map.entry("node", new NodeForm()),
-            Map.entry("canvas", new CanvasForm(this)),
-            Map.entry("double", new DoubleForm()),
-            Map.entry("float", new FloatForm()),
-            Map.entry("int", new IntForm()),
-            Map.entry("long", new LongForm()),
-            Map.entry("short", new ShortForm()),
-            Map.entry("sound", new SoundForm()),
-            Map.entry("string", new StringForm()),
-            Map.entry("uolCanvas", new UolCanvasForm(this)),
-            Map.entry("uolSound", new UolSoundForm()),
-            Map.entry("vector", new VectorForm()),
-            Map.entry("lua", new LuaForm())
+        Map.entry("node", new NodeForm()),
+        Map.entry("canvas", new CanvasForm(this)),
+        Map.entry("double", new DoubleForm()),
+        Map.entry("float", new FloatForm()),
+        Map.entry("int", new IntForm()),
+        Map.entry("long", new LongForm()),
+        Map.entry("short", new ShortForm()),
+        Map.entry("sound", new SoundForm()),
+        Map.entry("string", new StringForm()),
+        Map.entry("uolCanvas", new UolCanvasForm(this)),
+        Map.entry("uolSound", new UolSoundForm()),
+        Map.entry("vector", new VectorForm()),
+        Map.entry("lua", new LuaForm())
     );
 
     private final SearchDialog searchDialog = new SearchDialog(MainFrame.i18n.get("search"), this);
@@ -218,17 +218,17 @@ public final class EditPane extends JSplitPane {
                         case WzUOLProperty prop -> extraText += prop.getValue();
                         case WzVectorProperty prop -> extraText += "(" + prop.getX() + ", " + prop.getY() + ")";
                         case WzImageProperty prop when prop.isListProperty() ->
-                                extraText += "[" + prop.getChildren().size() + "]";
+                            extraText += "[" + prop.getChildren().size() + "]";
                         default -> {
                         }
                     }
 
                     setText(
-                            "<html>" +
-                                    obj.getName() +
-                                    " <font color='#808080'>" +
-                                    extraText +
-                                    "</font></html>"
+                        "<html>" +
+                            obj.getName() +
+                            " <font color='#808080'>" +
+                            extraText +
+                            "</font></html>"
                     );
                     if (obj.isTempChanged()) {
                         setForeground(Color.MAGENTA);
@@ -512,7 +512,7 @@ public final class EditPane extends JSplitPane {
         switch (wzObject) {
             case WzFolder obj -> text = text + "  /  " + obj.getKeyBoxName();
             case WzDirectory obj when obj.isWzFile() ->
-                    text = text + "  /  " + obj.getWzFile().getKeyBoxName() + "  /  " + MainFrame.i18n.get("version") + " " + obj.getWzFile().getHeader().getFileVersion();
+                text = text + "  /  " + obj.getWzFile().getKeyBoxName() + "  /  " + MainFrame.i18n.get("version") + " " + obj.getWzFile().getHeader().getFileVersion();
             case WzImageFile obj -> text = text + "  /  " + obj.getKeyBoxName();
             default -> {
             }
@@ -682,7 +682,7 @@ public final class EditPane extends JSplitPane {
                         // 如果 node 在“下半区域”
                         if (bounds.y > middleY) {
                             tree.scrollRectToVisible(
-                                    new Rectangle(0, bounds.y, 1, visible.height)
+                                new Rectangle(0, bounds.y, 1, visible.height)
                             );
                         }
                     }
@@ -829,15 +829,15 @@ public final class EditPane extends JSplitPane {
                     for (TreePath treePath : selectedPaths) {
                         DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
                         SearchUtil.search(
-                                option.search(),
-                                option.nameMod(),
-                                option.valueMod(),
-                                option.equalMod(),
-                                option.lowMod(),
-                                option.parseImgMod(),
-                                searchResults,
-                                node,
-                                editPane
+                            option.search(),
+                            option.nameMod(),
+                            option.valueMod(),
+                            option.equalMod(),
+                            option.lowMod(),
+                            option.parseImgMod(),
+                            searchResults,
+                            node,
+                            editPane
                         );
                     }
 
@@ -1151,7 +1151,7 @@ public final class EditPane extends JSplitPane {
         for (int i = 0; i < treeRoot.getChildCount(); i++) {
             DefaultMutableTreeNode child = (DefaultMutableTreeNode) treeRoot.getChildAt(i);
             if (child.getUserObject() instanceof WzObject wzObject
-                    && NodePathResolver.sameRootPath(NodePathResolver.rootPathOf(wzObject), rootPath)) {
+                && NodePathResolver.sameRootPath(NodePathResolver.rootPathOf(wzObject), rootPath)) {
                 return child;
             }
         }
@@ -1164,7 +1164,7 @@ public final class EditPane extends JSplitPane {
         for (int j = 0; j < parent.getChildCount(); j++) {
             DefaultMutableTreeNode child = (DefaultMutableTreeNode) parent.getChildAt(j);
             if (!(child.getUserObject() instanceof WzObject wzObject)
-                    || !selector.name().equalsIgnoreCase(wzObject.getName())) {
+                || !selector.name().equalsIgnoreCase(wzObject.getName())) {
                 continue;
             }
             if (selector.index() == null || selector.index() == sameNameIndex) {
@@ -2233,8 +2233,8 @@ public final class EditPane extends JSplitPane {
                 for (File xmlFile : xmlFiles) {
                     String imgName = xmlFile.getName();
                     imgName = imgName.endsWith(".xml")
-                            ? imgName.substring(0, imgName.length() - 4)
-                            : imgName;
+                        ? imgName.substring(0, imgName.length() - 4)
+                        : imgName;
                     if (targetDirectory.existImage(imgName)) {
                         if (choice == OverwriteChoice.SKIP_ALL) continue;
                         else if (choice == OverwriteChoice.OVERWRITE_ALL) {
@@ -2298,7 +2298,7 @@ public final class EditPane extends JSplitPane {
                 TreePath treePath = new TreePath(node.getPath());
                 boolean expanded = tree.isExpanded(treePath);
                 for (File file : files) {
-                    WzObject wzObject = targetWzFolder.addFile(file.toPath());
+                    WzObject wzObject = targetWzFolder.addFile(file.toPath(), false);
                     if (expanded) {
                         insertNodeToTree(node, wzObject, true);
                     }
@@ -2450,9 +2450,9 @@ public final class EditPane extends JSplitPane {
                     removeNodeFromTree((DefaultMutableTreeNode) treePath.getLastPathComponent());
                 }
                 case WzImage image when image.removeChild(wzObject.getName()) ->
-                        removeNodeFromTree((DefaultMutableTreeNode) treePath.getLastPathComponent());
+                    removeNodeFromTree((DefaultMutableTreeNode) treePath.getLastPathComponent());
                 case WzImageProperty property when property.removeChild(wzObject.getName()) ->
-                        removeNodeFromTree((DefaultMutableTreeNode) treePath.getLastPathComponent());
+                    removeNodeFromTree((DefaultMutableTreeNode) treePath.getLastPathComponent());
                 default -> log.error(MainFrame.i18n.get("test.temp0022", pWzObject.getClass().getSimpleName()));
             }
         }
@@ -2568,7 +2568,7 @@ public final class EditPane extends JSplitPane {
             case WzDirectory pDir when child instanceof WzImage cImg -> pDir.addChild(cImg);
             case WzImage image when child instanceof WzImageProperty property -> image.addChild(property);
             case WzImageProperty pProp when pProp.isListProperty() && child instanceof WzImageProperty cProp ->
-                    pProp.addChild(cProp);
+                pProp.addChild(cProp);
             default -> {
                 MainFrame.getInstance().getClipboard().unlock();
                 throw new RuntimeException(MainFrame.i18n.get("test.temp0027", parent.getClass().getSimpleName(), child.getClass().getSimpleName()));

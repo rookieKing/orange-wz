@@ -33,7 +33,7 @@ public class WzFolder extends WzObject {
     public List<WzObject> getChildren() {
         List<WzObject> result = children.getAllChildren();
         if (result.isEmpty()) {
-            loadFolder();
+            loadFolder(false);
         }
 
         return children.getAllChildren();
@@ -85,7 +85,7 @@ public class WzFolder extends WzObject {
         return false;
     }
 
-    public void loadFolder() {
+    public void loadFolder(boolean loadAll) {
         Path folderPath = Path.of(filePath);
         log.debug("加载目录: {}", folderPath);
         if (!Files.exists(folderPath) || !Files.isDirectory(folderPath)) {
@@ -93,19 +93,21 @@ public class WzFolder extends WzObject {
         }
 
         try (var paths = Files.list(folderPath)) {
-            paths.forEach(this::addFile);
+            paths.forEach(p -> addFile(p, loadAll));
         } catch (IOException e) {
             throw new RuntimeException();
         }
     }
 
-    public WzObject addFile(Path path) {
+    public WzObject addFile(Path path, boolean loadAll) {
         String filename = path.getFileName().toString();
         String pathStr = path.toAbsolutePath().toString();
         if (Files.isDirectory(path)) {
             WzFolder folder = new WzFolder(pathStr, keyBoxName, iv, key);
             children.add(folder);
-            folder.loadFolder();
+            if (loadAll) {
+                folder.loadFolder(true);
+            }
             return folder;
         } else if (filename.endsWith("List.wz")) {
             log.info("展开目录 {} 跳过 List.wz 文件", getName());
