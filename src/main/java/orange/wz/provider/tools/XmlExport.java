@@ -67,6 +67,13 @@ public final class XmlExport {
             }
         }
 
+        try {
+            FileTool.createDirectory(filePath.getParent());
+        } catch (Exception e) {
+            log.error("创建目录失败: {} {}", filePath.getParent(), e.getMessage());
+            return false;
+        }
+
         try (FileOutputStream fos = new FileOutputStream(filePath.toString())) {
 
             writer = new BufferedWriter(
