@@ -53,3 +53,55 @@
 1. 开发构建：运行 [build.bat](./script-win/build.bat)  
 2. 运行产物：运行 [run.target.bat](./script-win/run.target.bat)  
 3. 仅调试启动：运行 [start.bat](./script-win/start.bat)
+
+## Xml2ImgCli 使用说明
+
+源码位置：[Xml2ImgCli.java](./src/main/java/orange/wz/cli/Xml2ImgCli.java)
+
+作用：将 XML 目录导出为 `.img` 目录（支持并行处理）。
+
+### 参数
+
+- `--input <dir>`：输入目录（必填）
+- `--output <dir>`：输出目录（必填）
+- `--key-id <int>`：密钥 ID（必填）
+- `--jobs <int>`：并行线程数，可选，范围 `1~64`
+- `--overwrite`：输出目录存在时覆盖
+- `--help`：显示帮助
+
+### 密钥说明
+
+密钥读取自项目根目录下的 `keys.dat`。默认密钥由 [WzKeyStorage.java](./src/main/java/orange/wz/provider/tools/wzkey/WzKeyStorage.java) 初始化：
+
+- `1`：国际服务器(低版本)
+- `2`：亚洲服务器(低版本)
+- `3`：新版本客户端
+
+### 先构建
+
+在项目根目录执行：
+
+```bat
+mvnw.cmd -DskipTests -Plocal clean package
+```
+
+### 运行示例
+
+在项目根目录执行：
+
+```bat
+java -cp "target\classes;target\lib\*" orange.wz.cli.Xml2ImgCli --input "D:\wz-xml" --output "D:\wz-img" --key-id 3 --jobs 8 --overwrite
+```
+
+或仅查看帮助：
+
+```bat
+java -cp "target\classes;target\lib\*" orange.wz.cli.Xml2ImgCli --help
+```
+
+### 常见报错
+
+- `缺少必填参数: --input/--output/--key-id`：补齐必填参数
+- `输入目录不存在`：检查 `--input` 路径
+- `输出目录已存在，请加 --overwrite`：追加 `--overwrite`
+- `找不到密钥，请使用 --key-id`：确认 `keys.dat` 存在且 `--key-id` 正确
