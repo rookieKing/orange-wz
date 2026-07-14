@@ -1,4 +1,4 @@
 @echo off
-cd ../target
-call java -cp "OrzRepacker.jar.original;lib\*" orange.wz.OrangeWzApplication
+cd ..
+call java -cp "target\OrzRepacker.jar.original;target\lib\*" orange.wz.OrangeWzApplication
 pause
