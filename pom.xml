@@ -17,6 +17,8 @@
     <properties>
         <java.version>21</java.version>
         <lombok.version>1.18.38</lombok.version>
+        <skip.copy.jre>false</skip.copy.jre>
+        <skip.dist.zip>false</skip.dist.zip>
     </properties>
     <dependencies>
         <dependency>
@@ -163,6 +165,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.1.0</version>
+                <configuration>
+                    <skip>${skip.copy.jre}</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -191,6 +196,7 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.6.0</version>
                 <configuration>
+                    <skipAssembly>${skip.dist.zip}</skipAssembly>
                     <descriptors>
                         <descriptor>src/assembly/package.xml</descriptor>
                     </descriptors>
@@ -207,5 +213,15 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>local</id>
+            <properties>
+                <skip.copy.jre>true</skip.copy.jre>
+                <skip.dist.zip>true</skip.dist.zip>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>
